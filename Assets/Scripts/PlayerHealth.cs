@@ -37,7 +37,18 @@ public class PlayerHealth : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        spawnPosition = transform.position;
+        if (SpawnManager.Instance != null)
+        {
+            spawnPosition = SpawnManager.Instance.GetSpawnPosition(OwnerClientId);
+        }
+        else
+        {
+            spawnPosition = transform.position;
+            Debug.LogWarning("[PlayerHealth] SpawnManager no encontrado, usando posición actual como spawn.");
+        }
+
+        transform.position = spawnPosition;
+
         isAlive.OnValueChanged += OnAliveStateChanged;
         UpdateVisualState(isAlive.Value);
 
