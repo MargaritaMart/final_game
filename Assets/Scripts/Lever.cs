@@ -23,6 +23,9 @@ public class Lever : NetworkBehaviour
 
     private HashSet<PlayerMovement> playersInRange = new HashSet<PlayerMovement>();
 
+    [Header("Connected Objects")]
+    [SerializeField] private MovingPlatform connectedPlatform;
+
     private void Awake()
     {
         if (spriteRenderer == null)
@@ -93,21 +96,43 @@ public class Lever : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsServer) return;
-
+        // Verificar cooldown
         if (Time.time < lastInteractionTime + interactionCooldown)
             return;
 
-        foreach (PlayerMovement playerMovement in playersInRange) // Cambiar tipo
+        // Revisar si algún jugador PROPIO está en rango
+        foreach (PlayerMovement playerMovement in playersInRange)
         {
             if (playerMovement == null) continue;
 
+            // Verificar si es el jugador LOCAL (owner)
+            if (!playerMovement.IsOwner) continue;
+
+            // Leer input del jugador local
             if (playerMovement.IsInteractPressed())
             {
-                ToggleLever();
+                // Si somos servidor, ejecutar directamente
+                if (IsServer)
+                {
+                    ToggleLever();
+                }
+                else
+                {
+                    // Si somos cliente, pedir al servidor
+                    RequestToggleLeverRpc();
+                }
                 break;
             }
         }
+    }
+
+    // RPC
+
+    [Rpc(SendTo.Server)]
+    private void RequestToggleLeverRpc()
+    {
+        // Servidor recibe petición y ejecuta
+        ToggleLever();
     }
 
     private void ToggleLever()
@@ -115,6 +140,12 @@ public class Lever : NetworkBehaviour
         lastInteractionTime = Time.time;
         IsActivated.Value = !IsActivated.Value;
         Debug.Log($"[Lever] Toggled to: {(IsActivated.Value ? "ON" : "OFF")}");
+
+        // Controlar plataforma conectada
+        if (connectedPlatform != null)
+        {
+            connectedPlatform.SetPosition(IsActivated.Value);
+        }
     }
 
     //  PUBLIC METHODS
