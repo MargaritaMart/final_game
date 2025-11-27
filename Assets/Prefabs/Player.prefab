@@ -46,6 +46,8 @@ GameObject:
   - component: {fileID: 1387864724539644910}
   - component: {fileID: 1307155886314505135}
   - component: {fileID: 9150083539751577438}
+  - component: {fileID: 6962599467579029811}
+  - component: {fileID: 5838732105587635500}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -279,3 +281,32 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
+--- !u!114 &6962599467579029811
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5369972090942528501}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43d7f1de41a1ebc4e85e4b00dc169110, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &5838732105587635500
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5369972090942528501}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a1d0cd38756baf42bac698c863cdea4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  respawnDelay: 2
+  deathParticlesPrefab: {fileID: 6993244289246938043, guid: 403b0c74b0dcc654984d9a8444c2c140, type: 3}
+  enableDebugDeath: 1
