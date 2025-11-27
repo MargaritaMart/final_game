@@ -6,56 +6,68 @@ using TMPro;
 
 public class NetworkUI : MonoBehaviour
 {
-    [Header("UI References")]
-    [SerializeField] private Button hostButton;
-    [SerializeField] private Button clientButton;
-    [SerializeField] private GameObject lobbyPanel;
-    [SerializeField] private TMP_InputField ipInputField;
+    [SerializeField] Button hostButton;
+    [SerializeField] Button clientButton;
+    [SerializeField] TMP_InputField ipInputField;
+    [SerializeField] GameObject lobbyPanel;
 
-    private void Start()
+    void Start()
     {
         hostButton.onClick.AddListener(StartHost);
         clientButton.onClick.AddListener(StartClient);
-
-        if (string.IsNullOrEmpty(ipInputField.text))
-        {
-            ipInputField.text = "127.0.0.1";
-        }
+        
+        // Callback para detectar desconexiones
+        NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnect;
     }
 
-    private void StartHost()
+    void StartHost()
     {
         var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
-        transport.ConnectionData.Address = "0.0.0.0"; // Escuchar en todas las interfaces
-        transport.ConnectionData.Port = 7777;
-
+        
+        // Escuchar en todas las interfaces de red
+        transport.SetConnectionData("0.0.0.0", 7777);
+        
         NetworkManager.Singleton.StartHost();
         lobbyPanel.SetActive(false);
-        Debug.Log($"Started as Host on 0.0.0.0:7777");
+        
+        Debug.Log($"[HOST] Started on 0.0.0.0:7777");
     }
 
-    private void StartClient()
+    void StartClient()
     {
-        // Obtener IP del Input Field
-        string ipAddress = ipInputField.text;
-
-        // Validar que no esté vacío
+        string ipAddress = ipInputField.text.Trim();
+        
+        // Validación básica
         if (string.IsNullOrEmpty(ipAddress))
         {
-            Debug.LogError("IP Address is empty! Using default: 127.0.0.1");
-            ipAddress = "127.0.0.1";
+            Debug.LogError("[CLIENT] IP is empty!");
+            return;
         }
-
-        // Configurar Unity Transport con la IP ingresada
+        
         var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
-        transport.ConnectionData.Address = ipAddress;
-        transport.ConnectionData.Port = 7777;
-
-        // Iniciar como cliente
+        transport.SetConnectionData(ipAddress, 7777);
+        
         NetworkManager.Singleton.StartClient();
         lobbyPanel.SetActive(false);
-
-        Debug.Log($"Started as Client - Connecting to: {ipAddress}:7777");
+        
+        Debug.Log($"[CLIENT] Connecting to {ipAddress}:7777");
     }
-
+    
+    void OnClientDisconnect(ulong clientId)
+    {
+        if (NetworkManager.Singleton.IsClient && !NetworkManager.Singleton.IsHost)
+        {
+            Debug.LogError($"[CLIENT] Disconnected! ClientId: {clientId}");
+            // Reactivar lobby para reintentar
+            lobbyPanel.SetActive(true);
+        }
+    }
+    
+    void OnDestroy()
+    {
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnect;
+        }
+    }
 }
