@@ -25,9 +25,13 @@ public class NetworkUI : MonoBehaviour
 
     private void StartHost()
     {
+        var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
+        transport.ConnectionData.Address = "0.0.0.0"; // Escuchar en todas las interfaces
+        transport.ConnectionData.Port = 7777;
+
         NetworkManager.Singleton.StartHost();
         lobbyPanel.SetActive(false);
-        Debug.Log("Started as Host");
+        Debug.Log($"Started as Host on 0.0.0.0:7777");
     }
 
     private void StartClient()

@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -8,6 +9,7 @@ public class PlayerHealth : NetworkBehaviour
 {
     [Header("Respawn Settings")]
     [SerializeField] private float respawnDelay = 2f;
+    [SerializeField] private GameObject deathParticlesPrefab;
 
     private Vector3 spawnPosition;
 
@@ -22,10 +24,12 @@ public class PlayerHealth : NetworkBehaviour
     private SpriteRenderer spriteRenderer;
     private PlayerMovement playerMovement;
     private Rigidbody2D rb;
+    private Collider2D col;
 
     //  DEBUG (Opcional - para testing sin death zone) 
     [Header("Debug - Muerte con una tecla")]
     [SerializeField] private bool enableDebugDeath = true;
+    
 
     //  LIFECYCLE 
     void Awake()
@@ -33,6 +37,7 @@ public class PlayerHealth : NetworkBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         playerMovement = GetComponent<PlayerMovement>();
         rb = GetComponent<Rigidbody2D>();
+        col = GetComponent<Collider2D>();
     }
 
     public override void OnNetworkSpawn()
@@ -99,13 +104,6 @@ public class PlayerHealth : NetworkBehaviour
 
         isAlive.Value = false;
 
-        // Detener física
-        if (rb != null)
-        {
-            rb.linearVelocity = Vector2.zero;
-            rb.bodyType = RigidbodyType2D.Kinematic;
-        }
-
         Invoke(nameof(Respawn), respawnDelay); // llamar el respawn con delay
     }
 
@@ -124,7 +122,7 @@ public class PlayerHealth : NetworkBehaviour
     [Rpc(SendTo.Owner)]
     private void TeleportPlayerRpc(Vector3 position)
     {
-        transform.position = spawnPosition;
+        transform.position = position;
 
         // Reactivar física
         if (rb != null)
@@ -148,32 +146,38 @@ public class PlayerHealth : NetworkBehaviour
     /// Actualiza visuals según estado de vida.
     private void UpdateVisualState(bool alive)
     {
-        if (alive)
+
+        // Gráficos
+        if (spriteRenderer != null) spriteRenderer.enabled = alive;
+
+        // Lógica de Movimiento (Input)
+        if (playerMovement != null) playerMovement.enabled = alive;
+        
+        // Colisiones (Para que no siga chocando con la DeathZone mientras espera)
+        if (col != null) col.enabled = alive;
+
+        // Detener física
+        if (rb != null)
         {
-            //Vivo activar sprite y el movimiento
-            if (spriteRenderer != null)
-                spriteRenderer.enabled = true;
+            if (alive)
+            {
+                rb.bodyType = RigidbodyType2D.Dynamic;
+            }
+            else
+            {
+                
+                rb.linearVelocity = Vector2.zero;
+                rb.bodyType = RigidbodyType2D.Kinematic;
+                // TODO: Se puede agregar:
+                // - Efecto de partículas
+                // - Sonido de muerte
+                // - Animación de muerte
 
-            if (playerMovement != null)
-                playerMovement.enabled = true;
-
-            Debug.Log($"[PlayerHealth] Player is now ALIVE");
-        }
-        else
-        {
-            // Muerto
-            if (spriteRenderer != null)
-                spriteRenderer.enabled = false;
-
-            if (playerMovement != null)
-                playerMovement.enabled = false;
-
-            Debug.Log($"[PlayerHealth] Player is now DEAD");
-
-            // TODO: Se puede agregar:
-            // - Efecto de partículas
-            // - Sonido de muerte
-            // - Animación de muerte
+                if (deathParticlesPrefab != null)
+                {
+                    Instantiate(deathParticlesPrefab, transform.position, Quaternion.identity);
+                }
+            }
         }
     }
 }
