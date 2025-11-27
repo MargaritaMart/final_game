@@ -96,4 +96,10 @@ public class PlayerMovement : NetworkBehaviour
             Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
         }
     }
+
+    public bool IsInteractPressed()
+    {
+        if (inputActions == null) return false;
+        return inputActions.Player.Interact.WasPressedThisFrame();
+    }
 }

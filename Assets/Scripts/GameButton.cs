@@ -5,16 +5,21 @@ public class GameButton : NetworkBehaviour
 {
     [Header("Visual Feedback")]
     [SerializeField] private SpriteRenderer spriteRenderer;
+    [SerializeField] private Sprite normalSprite;
+    [SerializeField] private Sprite pressedSprite;
     [SerializeField] private Color normalColor = Color.yellow;
     [SerializeField] private Color pressedColor = Color.red;
 
     [Header("State")]
     // NetworkVariable para sincronizar si está presionado
     public NetworkVariable<bool> IsPressed = new NetworkVariable<bool>(
-        value: true,
+        false,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
+
+    [Header("Connected Objects")]
+    [SerializeField] private Door connectedDoor;
 
     private void Awake()
     {
@@ -48,20 +53,47 @@ public class GameButton : NetworkBehaviour
 
     private void UpdateVisuals(bool pressed)
     {
-        // Cambiar color según estado
+        // Cambiar color según estado y sprites para el futuro
         spriteRenderer.color = pressed ? pressedColor : normalColor;
+        spriteRenderer.sprite = pressed ? pressedSprite : normalSprite;
     }
 
-    // COLLISION DETECTION (siguiente paso)
-    // Lo implementaremos en Paso 2
-
-    private void Update()
+    // COLLISION DETECTION
+    private void OnTriggerEnter2D(Collider2D other)
     {
-        // Solo para testing: presiona T para cambiar estado (solo server)
-        if (Input.GetKeyDown(KeyCode.T) && IsServer)
+        // Solo el servidor procesa la lógica de juego
+        if (!IsServer) return;
+
+        // Verificar que es un jugador
+        if (other.CompareTag("Player"))
         {
-            IsPressed.Value = !IsPressed.Value;
-            Debug.Log($"[Button TEST] Toggled to: {IsPressed.Value}");
+            Debug.Log($"[GameButton] Player entered trigger: {other.name}");
+
+            IsPressed.Value = true;
+
+            // Abrir puerta conectada
+            if (connectedDoor != null)
+            {
+                connectedDoor.Open();
+            }
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        // Solo el servidor procesa la lógica de juego
+        if (!IsServer) return;
+
+        // Verificar que es un jugador
+        if (other.CompareTag("Player"))
+        {
+            Debug.Log($"[GameButton] Player exited trigger: {other.name}");
+
+            // Cerrar puerta conectada
+            if (connectedDoor != null)
+            {
+                connectedDoor.Close();
+            }
         }
     }
 }
