@@ -116,6 +116,14 @@ public class PlayerHealth : NetworkBehaviour
 
         Debug.Log($"[PlayerHealth] SERVER: Respawning at {spawnPosition}");
 
+        TeleportPlayerRpc(spawnPosition);
+
+        isAlive.Value = true;
+    }
+
+    [Rpc(SendTo.Owner)]
+    private void TeleportPlayerRpc(Vector3 position)
+    {
         transform.position = spawnPosition;
 
         // Reactivar física
@@ -125,7 +133,7 @@ public class PlayerHealth : NetworkBehaviour
             rb.linearVelocity = Vector2.zero;
         }
 
-        isAlive.Value = true;
+        Debug.Log("[PlayerHealth] Teleported to spawn point locally");
     }
 
 
